@@ -109,6 +109,7 @@ kalyx/
 │   │   └── demo.py        simulated series
 │   └── tests/
 │       └── test_stats.py
+|       └── test_features.py
 └── frontend/
     ├── package.json
     ├── vite.config.ts
