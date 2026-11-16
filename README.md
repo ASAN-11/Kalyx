@@ -417,7 +417,7 @@ Put these files in `frontend/public/assets/`:
 | `hero.mp4` or `hero.jpg` | Landing page hero background |
 | `band.mp4` or `band.jpg` | Full-width mid-page band |
 
-If a file is missing, a gradient is shown instead. Use short, muted, compressed videos. Check the usage terms and credit line of any imagery before publishing, and list each one in your resources. You can change file extensions as per your choice but remember to change extension in `frontend/src/components/MediaHolder.tsx`.
+If a file is missing, a gradient is shown instead. Use short, muted, compressed videos. Check the usage terms and credit line of any imagery before publishing, and list each one in your resources. Files with different extensions but same media format can be added as per your choice but remember to change extension in `frontend/src/components/MediaHolder.tsx`.
 
 ## Testing
 
