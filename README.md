@@ -80,7 +80,7 @@ Built for the NASA Space Apps Challenge 2026, **Be an Earth System Trend Detecti
 - Copy the time series as CSV, or the analysis metadata as JSON. Print from the browser.
 
 **Learn**
-- A long-form guide with 15 collapsible topics: trend tests, reading the verdict, seasonality, autocorrelation, false discoveries, point versus area versus pixel analysis, the NASA datasets, data quality, resolution, what significance does not mean, a step-by-step method, a glossary and FAQs.
+- A long-form guide with 14 collapsible topics: trend tests, reading the verdict, seasonality, autocorrelation, false discoveries, point versus area versus pixel analysis, the NASA datasets, data quality, resolution, what significance does not mean, a step-by-step method, a glossary and FAQs.
 
 **Design**
 - Cinematic landing page with image or video holders, and a compact mission-control dashboard. Obsidian-black with cyan accents; Barlow Condensed, Inter and IBM Plex Mono. Responsive from phone to desktop, visible keyboard focus, reduced-motion support.
@@ -179,16 +179,19 @@ kalyx/
 │   └── tests/
 │       ├── test_stats.py          core statistics and basic API calls
 │       ├── test_features.py       CSV picker, aggregation, seasonal MK, AppEEARS job flow, CMR, PDF
-│       └── test_area.py           polygons, area weighting, xarray conversion, pixel maps, GES DISC job flow
+│       ├── test_area.py           polygons, area weighting, xarray conversion, pixel maps, GES DISC job flow
+│       └── test_robustness.py     NaN/inf input, constant series, request validation, stale-job checks, job-registry bound
 └── frontend/
     ├── index.html
     ├── package.json
     ├── package-lock.json
     ├── tsconfig.json
-    ├── vite.config.ts             dev server and /api proxy
+    ├── vite.config.ts             dev server, /api proxy, and test (vitest) settings
     ├── public/assets/
     │   └── README.txt             where to put hero and band media
     └── src/
+        ├── __tests__/
+        │   └── app.test.tsx       component and API tests (vitest, jsdom)
         ├── main.tsx               entry point
         ├── App.tsx                landing page, catalogue, CMR search, layout
         ├── api.ts                 typed API client and PDF download
@@ -198,6 +201,7 @@ kalyx/
             ├── Investigate.tsx    dashboard: options, data sources, results, exports
             ├── MapPicker.tsx      Leaflet + NASA GIBS, polygon drawing, trend overlay
             ├── CsvPicker.tsx      CSV upload and column picker
+            ├── NumInput.tsx       numeric field that allows typing -, 0. and 0.02
             ├── Chart.tsx          time-series SVG chart
             └── Learn.tsx          long-form guide (accordion)
 ```
@@ -385,6 +389,8 @@ The spatial endpoint accepts the same body. It needs `source: "demo"` or a finis
 
 ### Errors
 
+Requests are validated: years must be between 1950 and 2100, `alpha` between 0 and 1, and `csv_text` at most 10 MB. A job can only be analysed for the variable (and, for AppEEARS, the location) it was fetched for.
+
 Errors return JSON `{"detail": "..."}` with status 404, 422 or 502. Common 422 causes: a period under 10 years, fewer than 24 valid observations, an invalid or oversized polygon, a missing column, an unfinished job, or a pixel-map request on point-only data.
 
 ## Frontend guide
@@ -394,6 +400,7 @@ Errors return JSON `{"detail": "..."}` with status 404, 422 or 502. Common 422 c
 | `App.tsx` | Landing sections, variable catalogue, CMR search, dashboard and Learn placement |
 | `components/Investigate.tsx` | Dashboard state: variable, location, period, test, aggregation, data source, job polling, results, PDF and copy buttons |
 | `components/MapPicker.tsx` | Leaflet map with GIBS layer and date selection, point picking, polygon drawing, and the pixel-trend overlay |
+| `components/NumInput.tsx` | Numeric text field that keeps what you type (for example `-273.15` or `0.02`) and reports only valid numbers |
 | `components/CsvPicker.tsx` | Upload or paste CSV, column detection, scale, offset, fill, quality options, preview |
 | `components/Chart.tsx` | Time series with the linear trend line |
 | `components/MediaHolder.tsx` | Looks for `/assets/<name>.mp4` and `/assets/<name>.jpg`; falls back to a gradient |
@@ -414,12 +421,23 @@ If a file is missing, a gradient is shown instead. Use short, muted, compressed 
 
 ## Testing
 
+**Backend** (28 tests):
+
 ```bash
 cd backend
 pytest
 ```
 
-Twenty-two tests cover: trend detection and a no-trend control; Benjamini-Hochberg; CSV inspection (Giovanni layout), scale, fill and quality filtering; monthly aggregation; seasonal Mann-Kendall; the CSV column-picker API path; the AppEEARS job and cache flow with a fake connector; missing-credential messages; CMR parsing; polygon masks, validation and area weighting; xarray conversion and unit conversion; per-cell opposite-trend detection with FDR through a GES DISC job; and PDF generation. There are no frontend tests; `npm run build` type-checks the frontend.
+They cover: trend detection and a no-trend control; Benjamini-Hochberg; CSV inspection (Giovanni layout), scale, fill and quality filtering; monthly aggregation; seasonal Mann-Kendall; the CSV column-picker API path; the AppEEARS and GES DISC job and cache flows with fake connectors; missing-credential messages; CMR parsing; polygon masks, validation and area weighting; xarray conversion and unit conversion; per-cell opposite-trend detection with FDR; PDF generation; and robustness cases (NaN or infinite values, constant series, out-of-range requests, a fetched job reused for a different variable or place, and the bounded job registry).
+
+**Frontend** (13 tests, Vitest with jsdom and Testing Library):
+
+```bash
+cd frontend
+npm test
+```
+
+They cover: typing negative and partial decimals in numeric fields, API error formatting, running an analysis and showing the verdict or an error, blocking a live-source run until data is fetched, dropping a fetched job when the variable or place changes, the chart (including a flat series), the media-holder fallback, and the Learn guide. The map component is replaced by a stub in these tests, so Leaflet and polygon drawing are not covered by automated tests. `npm run build` also type-checks the code.
 
 ## Deployment notes
 
@@ -463,9 +481,9 @@ Twenty-two tests cover: trend detection and a no-trend control; Benjamini-Hochbe
 - AppEEARS is point sampling only. Area averages and pixel maps need GES DISC or simulated data.
 - Polygon membership uses cell centres, so cells partly inside are included or excluded as a whole. Cells coarser than the polygon fall back to the nearest cell.
 - The seasonal Mann-Kendall test has no autocorrelation correction, and the lag-1 adjustment is not the full Hamed-Rao or Yue-Wang method. Per-cell tests use only 10 to 25 annual values.
-- Jobs are held in memory and lost on restart (cached data survives). Monthly sums assume complete coverage.
+- Jobs are held in memory (the newest 30 finished jobs are kept) and lost on restart (cached data survives). Monthly sums assume complete coverage.
 - The catalogue unit text for some variables differs from the unit of live-converted data.
-- No accounts, database or saved investigations. No frontend tests.
+- No accounts, database or saved investigations. The map (Leaflet, GIBS tiles, polygon drawing) has no automated tests and has not been checked in a real browser.
 - Trend significance is statistical evidence only. It does not identify causes.
 
 ## Roadmap
@@ -475,7 +493,7 @@ Twenty-two tests cover: trend detection and a no-trend control; Benjamini-Hochbe
 - Fuller autocorrelation correction (multi-lag); persistent job store (Redis)
 - Region comparison and multi-variable correlation
 - Trend Atlas of cached results; PostgreSQL with PostGIS for saved investigations
-- Frontend tests
+- Browser-level end-to-end tests for the map and polygon drawing
 
 ## Data sources and credits
 
@@ -499,4 +517,4 @@ NASA does not endorse this project. The website design takes inspiration from ae
 
 ## AI assistance disclosure
 
-This project's code and documentation were generated with the help of an AI assistant (Claude, by Anthropic) and then reviewed and run by the team. State this in your Space Apps submission as the challenge rules require.
+This project's code and documentation were generated with the side help of an AI assistant (Claude, by Anthropic) and then reviewed and run by the team.
