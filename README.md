@@ -517,4 +517,4 @@ NASA does not endorse this project. The website design takes inspiration from ae
 
 ## AI assistance disclosure
 
-This project's code and documentation were generated with the side help of an AI assistant (Claude, by Anthropic) and then reviewed and run by the team.
+This project's code and documentation were completed with the side help of an AI assistant (Claude, by Anthropic) and then reviewed and run by the team.
