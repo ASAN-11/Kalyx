@@ -15,7 +15,7 @@ nav a{color:#fff;text-decoration:none;font-size:12px;letter-spacing:.14em;text-t
 .earth2{background:radial-gradient(60% 90% at 100% 50%,#2f8f77 0,#0e3f56 35%,#050607 75%),#050607}
 .hero{min-height:100svh;display:flex;align-items:flex-end}.hero-in{padding-bottom:96px;width:100%;max-width:1440px;margin:auto}
 .band{min-height:70svh;display:flex;align-items:center}
-.eye{font:500 12px 'IBM Plex Mono';letter-spacing:.2em;color:var(--cy);text-transform:uppercase;margin-bottom:20px}.sub{max-width:560px;color:#d5dbde;margin:28px 0 36px;font-size:18px}
+.eye{font:500 12px 'IBM Plex Mono';letter-spacing:.2em;color:var(--cy);text-transform:uppercase;margin-bottom:10px;margin-top: 100px}.sub{max-width:560px;color:#d5dbde;margin:28px 0 36px;font-size:18px}
 .btn{border:1px solid #fff;background:none;color:#fff;padding:12px 24px;font:600 12px Inter;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block;transition:.2s}
 .btn:hover:not(:disabled){background:#fff;color:#000}.btn.solid{background:var(--cy);border-color:var(--cy);color:#000}.btn:disabled{opacity:.5}
 .btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
