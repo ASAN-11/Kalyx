@@ -1,1 +1,1 @@
-Place hero.mp4 / hero.jpg and band.mp4 / band.jpg here.
+Place hero.mp4 / hero.png and band.mp4 / band.png here.
